@@ -1,0 +1,46 @@
+box score explains R² = 0.338 of RAPM across 627 players
+
+box model, ranked by effect of a one standard deviation change
+               stat  per_100_coef  per_sd
+             Points         1.996   6.283
+   Field goals made        -2.164  -2.470
+      Shot attempts        -0.932  -2.094
+Free throw attempts        -1.076  -1.239
+            Assists         0.591   0.781
+          Turnovers        -1.210  -0.608
+        Threes made        -0.715  -0.511
+             Steals         1.753   0.497
+ Defensive rebounds         0.257   0.335
+ Offensive rebounds         0.215   0.190
+             Blocks         0.418   0.182
+   Threes attempted         0.011   0.020
+              Fouls        -0.019  -0.014
+
+most undersold by the box score (6,000+ possessions)
+       player team     poss  rapm  box_est  gap
+Dillon Brooks  MEM 20538.00  3.37    -1.14 4.51
+Derrick White  BOS 21798.00  5.10     1.33 3.77
+  Paul George  LAC 19306.00  5.98     2.24 3.74
+  Alex Caruso  CHI 15626.00  4.71     1.01 3.70
+ Jrue Holiday  MIL 25685.00  5.93     2.23 3.70
+ Aaron Gordon  DEN 22980.00  3.82     0.24 3.58
+     Rudy Gay UTAH 12836.00  3.09    -0.41 3.50
+ Franz Wagner  ORL 19744.00  3.96     0.55 3.41
+
+most oversold
+           player team     poss  rapm  box_est   gap
+    Collin Sexton UTAH 13928.00 -4.28     0.44 -4.72
+      Cam Reddish  POR 11100.00 -4.86    -0.49 -4.38
+    Norman Powell  LAC 20786.00 -3.07     1.25 -4.32
+Tyrese Haliburton  IND 25785.00 -1.10     3.21 -4.31
+         Naz Reid  MIN 15541.00 -3.20     1.04 -4.23
+  Trendon Watford  POR  8072.00 -3.83     0.35 -4.18
+     Theo Maledon  CHA 14124.00 -5.30    -1.27 -4.03
+     R.J. Hampton  DET 11898.00 -5.51    -1.54 -3.97
+
+forecasting next season's team net rating, 215 team-seasons
+                          model     r
+          RAPM, 3-season window 0.703
+          RAPM, one season only 0.663
+             Box-score estimate 0.658
+Team's own net rating last year 0.553

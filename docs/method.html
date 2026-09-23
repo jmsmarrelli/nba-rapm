@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Method notes</title>
+<meta name="description" content="The reconstruction rules in full, the estimator&#x27;s choices, and where I think this is weakest.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --surface:#fcfcfb; --raised:#f4f3ef; --ink:#0b0b0b; --ink-2:#43423f; --ink-3:#7d7b74;
+  --rule:#e3e2dc; --accent:#1c5cab; --mark:#eb6834;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --surface:#14140f; --raised:#1e1e18; --ink:#f2f1ec; --ink-2:#c9c7bf; --ink-3:#8d8b83;
+    --rule:#2e2e27; --accent:#7fb0f0; --mark:#f2895a;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--surface); color:var(--ink);
+  font:400 17px/1.62 "Source Sans 3","Source Sans Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  font-feature-settings:"kern" 1;
+}
+.wrap{max-width:1020px;margin:0 auto;padding:0 22px}
+.bar{border-bottom:1px solid var(--rule);background:var(--surface)}
+.bar .wrap{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;padding-top:16px;padding-bottom:15px}
+.bar .slug{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;letter-spacing:.02em;color:var(--ink-2)
+}
+.bar nav{margin-left:auto;display:flex;gap:18px}
+.bar a{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;color:var(--ink-3);text-decoration:none;border-bottom:1px solid transparent
+}
+.bar a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+main{padding:0 0 96px}
+.col{max-width:700px}
+h1{
+  font-family:Archivo,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-weight:700;font-size:clamp(30px,5.4vw,46px);line-height:1.08;
+  letter-spacing:-.022em;margin:54px 0 20px;max-width:640px
+}
+h2{
+  font-family:Archivo,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-weight:600;font-size:22px;line-height:1.24;letter-spacing:-.012em;
+  margin:52px 0 14px;max-width:700px
+}
+h3{font-family:Archivo,"Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:600;
+  font-size:18.5px;letter-spacing:-.008em;margin:40px 0 8px}
+p.meta{font-size:14.5px;color:var(--ink-3);margin:-2px 0 16px}
+p.meta a{border-bottom-color:transparent}
+p.meta a:hover{border-bottom-color:currentColor}
+p{margin:0 0 18px;max-width:700px}
+p strong{font-weight:600}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(28,92,171,.32)}
+a:hover{border-bottom-color:currentColor}
+hr{border:0;border-top:1px solid var(--rule);margin:46px 0}
+ul,ol{margin:0 0 18px;padding-left:22px;max-width:700px}
+li{margin:0 0 8px}
+li>p{margin:0 0 8px}
+code{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.86em;background:var(--raised);padding:.12em .34em;border-radius:3px
+}
+pre{
+  background:var(--raised);border:1px solid var(--rule);border-radius:5px;
+  padding:15px 17px;overflow-x:auto;margin:0 0 22px;max-width:820px
+}
+pre code{background:none;padding:0;font-size:13px;line-height:1.55}
+em{color:var(--ink-2)}
+.tw{overflow-x:auto;margin:0 0 26px;max-width:980px}
+table{border-collapse:collapse;font-size:14.5px;min-width:100%}
+th,td{padding:7px 15px 7px 0;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{
+  font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;
+  color:var(--ink-3);font-weight:500;border-bottom-color:var(--ink-3);white-space:normal
+}
+td.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:22px}
+th.num{text-align:right;padding-right:22px}
+tbody tr:last-child td{border-bottom:0}
+figure{margin:30px 0 34px;max-width:980px}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:4px}
+.foot{border-top:1px solid var(--rule);padding:22px 0 40px}
+.foot .wrap{
+  font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  font-size:11.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:8px 20px
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .wrap{padding:0 16px}
+  h1{margin-top:36px}
+  th,td{padding-right:14px}
+}
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap"><span class="slug">nba-rapm</span><nav><a href="../index.html">findings</a><a href="https://github.com/jmsmarrelli/nba-rapm">repository</a><a href="https://jmsmarrelli.github.io/basketball-analytics/">all projects</a></nav></div></header>
+<main><div class="wrap">
+<h1>Method notes</h1>
+<p>The reconstruction rules in full, the estimator's choices, and where I think this
+is weakest.</p>
+<h2>Rebuilding a lineup</h2>
+<p>For each game:</p>
+<ol>
+<li>
+<p><strong>Roster.</strong> Both teams' available players come from the box score, not the
+   log. This matters more than it sounds: a player who checks in, plays two
+   minutes and never touches the ball appears in the log exactly twice, and both
+   appearances are substitutions.</p>
+</li>
+<li>
+<p><strong>Period-start five.</strong> Within each period, for every player, record the index
+   of his first substitution <em>in</em> and the index of his first appearance in any
+   other event, including being substituted <em>out</em>. He started the period if the
+   second exists and comes first, or if it exists and he never entered.</p>
+</li>
+</ol>
+<p>Being substituted out counts as evidence of presence, which is what makes the
+   rule work for a player who starts a period and does nothing before sitting
+   down.</p>
+<ol start="3">
+<li>
+<p><strong>Fallback.</strong> If period one does not resolve to five a side, the box score's
+   <code>starter</code> flag is used. Periods two onward have no fallback.</p>
+</li>
+<li>
+<p><strong>Walk.</strong> Apply substitutions in order. If a team's on-court set ever leaves
+   five, the game is dropped.</p>
+</li>
+<li>
+<p><strong>Check.</strong> Accumulate floor time per player from the clock, compare against
+   box score minutes, and drop the game if the mean absolute error across players
+   exceeds 1.5 minutes or any single player is off by more than 6.</p>
+</li>
+</ol>
+<p>Steps 4 and 5 are the ones that matter for trust. The check is not a formality —
+it is what catches a period whose starting five resolved to five <em>wrong</em> players,
+which the walk itself has no way to notice.</p>
+<h3>What the failures look like</h3>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Reason</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lineup</code></td>
+<td>a period would not resolve to five a side, or a substitution broke the five</td>
+</tr>
+<tr>
+<td><code>minutes_mean</code></td>
+<td>the whole game's floor time drifted from the box score</td>
+</tr>
+<tr>
+<td><code>minutes_max</code></td>
+<td>one player's did</td>
+</tr>
+<tr>
+<td><code>no_box</code> / <code>no_box_minutes</code></td>
+<td>the box score for that game is missing or empty</td>
+</tr>
+</tbody>
+</table></div>
+<p>The 2017-18 through 2019-20 seasons carry far more <code>lineup</code> failures than the
+rest, which points at the source feed rather than at the rule: the same code run
+on 2021-22 keeps 98.9% of games.</p>
+<h2>Counting possessions</h2>
+<p>The usual estimator is FGA + 0.44×FTA − OREB + TOV. It is a good season-level
+approximation and a poor stint-level one, because the 0.44 is a league-average
+guess about which free throws end a trip and stints are three or four
+possessions long.</p>
+<p>Since the log is available, possessions are counted instead. Every event that
+unambiguously identifies who has the ball is marked with that team — shots,
+free throws, rebounds (offensive to the shooting team, defensive to the other),
+turnovers — and the sequence of marks is compressed into runs. Each run is a
+possession.</p>
+<p>Events that do not identify possession (fouls, timeouts, jump balls,
+substitutions) are skipped rather than guessed at. That is safe: dropping a
+marker can only merge two possessions that were already adjacent and identical,
+and adjacent identical marks collapse anyway.</p>
+<p>The case this handles that the formula does not is the and-one. Made field goal
+and free throw are both marked to the same team, they are adjacent, and they
+collapse into the single possession they actually were.</p>
+<p>The resulting count comes out at 96.3 possessions per team per game across the
+sample. Published pace figures for these seasons sit a shade higher, around 98 to
+100, and the gap is the possessions that end without a marker the log identifies
+— a period expiring on a missed shot with no rebound recorded, most often. It is
+a level shift of two or three per cent that applies to every stint equally, so it
+scales every rating by the same small factor and does not move anyone's rank.</p>
+<h2>The design matrix</h2>
+<p>One row per stint-side. Ten ones: five players in the offense block, five in the
+defense block, plus a home indicator.</p>
+<ul>
+<li>Outcome: 100 × points ÷ possessions for that stint-side.</li>
+<li>Weight: possessions.</li>
+<li>Defensive coefficients are reported sign-flipped, so positive is good on both
+  sides.</li>
+</ul>
+<p>Ridge, <code>sparse_cg</code>, intercept unpenalized. 188,329 rows by 1,563 columns for the
+three-season window, which solves in a couple of seconds.</p>
+<h3>Why folds are split by game</h3>
+<p>Stints inside a game share a defense, a venue, a night's shooting, and mostly the
+same twenty players. Randomly splitting rows lets the model score a stint using
+another stint from the same game, which flatters every model in the comparison
+and flatters the unregularised one most, because it is the one memorising.</p>
+<h3>On the penalty</h3>
+<p>The cross-validation curve is shallow between roughly 1,000 and 8,000 — the
+difference between the best and worst penalty in that range is under a tenth of a
+percent of MSE. That is worth being honest about: the exact choice of 4,000 barely matters,
+and the ranking of players is stable across the whole plateau. What matters
+enormously is being somewhere on the plateau rather than at either end.</p>
+<h2>Things I considered and did not do</h2>
+<p><strong>A box-score prior.</strong> Every production metric starts players at a prior derived
+from their counting stats, then lets the plus-minus data pull them away. It
+improves the ratings. It also makes the comparison in <code>run_04_boxscore.py</code>
+circular, because the thing being compared to the box score would already
+contain it. Left out on purpose.</p>
+<p><strong>Recency weighting.</strong> A three-season window treats a possession from 2020 the
+same as one from 2023. Real systems decay it. Adding decay would help the
+forecast and cost the simplicity of "this window, these games, this fit".</p>
+<p><strong>Filtering garbage time.</strong> Every threshold is arbitrary, and possession
+weighting already makes blowout minutes cheap relative to close ones. I would
+revisit this if the ratings were going into a decision rather than a repository.</p>
+<p><strong>Bootstrapped intervals.</strong> Resampling games and refitting would give an honest
+error bar per player. It is a few hours of compute and the right next step, and
+its absence is the single biggest gap in what is here.</p>
+<h2>Where I think this is weakest</h2>
+<p><strong>Collinearity is managed, not solved.</strong> Ridge stops the model from making wild
+claims about players it cannot separate. It does not let it separate them. Two
+players who share 95% of their minutes get similar ratings because the data
+genuinely cannot distinguish them, and the penalty makes that look like
+agreement rather than ignorance. Nothing in the output flags which players are in
+that position, and it should.</p>
+<p><strong>The three thin seasons.</strong> 2017-18 to 2019-20 keep 80-85% of games. If the games
+that fail are not random — and there is no reason to assume they are — then those
+seasons contribute a slightly biased sample, and the ten-season forecast exercise
+runs across them.</p>
+<p><strong>Ratings are league-relative.</strong> They are not value over replacement and should
+not be summed into a team total without care. The forecast in stage 4 does
+possession-weight them into a team prediction, which is a legitimate use, but a
+salary or trade valuation would need a replacement baseline this does not
+provide.</p>
+<p><strong>One number per player per window.</strong> No role adjustment, no lineup interactions,
+no split by opponent quality. A player whose value depends on fitting a specific
+scheme gets one number that averages over the schemes he played in.</p>
+</div></main>
+<footer class="foot"><div class="wrap"><span>nba-rapm</span><span>figures and tables regenerated by the pipeline in this repository</span></div></footer>
+</body>
+</html>

@@ -1,0 +1,43 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# The pipeline needs several hundred megabytes of raw shot files that are not in
+# the repository, so CI does not re-run the analysis. What it does check is that
+# the code still imports, that every figure and table the write-up points at is
+# actually committed, and that the published page has not drifted from the
+# README it is generated from.
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt markdown
+
+      - name: Every module imports
+        run: |
+          for f in src/*.py; do
+            PYTHONPATH=src python -c "import $(basename "$f" .py)"
+          done
+
+      - name: Every referenced figure and table exists
+        run: python tools/site.py --check
+
+      - name: The published page matches the README
+        run: |
+          python tools/site.py
+          git diff --exit-code

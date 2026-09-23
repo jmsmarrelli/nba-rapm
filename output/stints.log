@@ -1,0 +1,22 @@
+  season=2014  games_in_pbp=1226  games_kept=1201  keep_rate=0.9796  mean_minute_error=0.461  stints=63688  possessions=224896  seconds=49.9  drop_lineup=24  drop_no_box_minutes=1
+  season=2015  games_in_pbp=1227  games_kept=1202  keep_rate=0.9796  mean_minute_error=0.458  stints=65971  possessions=225049  seconds=51.1  drop_lineup=24  drop_minutes_max=1
+  season=2016  games_in_pbp=1228  games_kept=1205  keep_rate=0.9813  mean_minute_error=0.461  stints=66051  possessions=222631  seconds=49.0  drop_lineup=23
+  season=2017  games_in_pbp=1231  games_kept=1205  keep_rate=0.9789  mean_minute_error=0.452  stints=66047  possessions=230990  seconds=49.2  drop_lineup=25  drop_no_box_minutes=1
+  season=2018  games_in_pbp=1225  games_kept=1040  keep_rate=0.849  mean_minute_error=0.297  stints=56494  possessions=200515  seconds=44.9  drop_lineup=163  drop_minutes_max=20  drop_minutes_mean=1  drop_no_box_minutes=1
+  season=2019  games_in_pbp=1231  games_kept=984  keep_rate=0.7994  mean_minute_error=0.309  stints=54545  possessions=195414  seconds=44.6  drop_lineup=187  drop_minutes_max=48  drop_minutes_mean=12
+  season=2020  games_in_pbp=1057  games_kept=872  keep_rate=0.825  mean_minute_error=0.3  stints=49933  possessions=173672  seconds=38.4  drop_lineup=157  drop_minutes_max=26  drop_minutes_mean=2
+  season=2021  games_in_pbp=1081  games_kept=1066  keep_rate=0.9861  mean_minute_error=0.26  stints=57855  possessions=209677  seconds=45.0  drop_lineup=15
+  season=2022  games_in_pbp=1231  games_kept=1217  keep_rate=0.9886  mean_minute_error=0.259  stints=66846  possessions=237096  seconds=51.5  drop_lineup=14
+  season=2023  games_in_pbp=1176  games_kept=1153  keep_rate=0.9804  mean_minute_error=0.263  stints=63628  possessions=226882  seconds=47.8  drop_lineup=20  drop_minutes_mean=3
+
+ season  games_in_pbp  games_kept  keep_rate  mean_minute_error  stints  possessions  seconds  drop_lineup  drop_minutes_mean  drop_no_box_minutes  drop_minutes_max
+   2014          1226        1201     0.9796              0.461   63688       224896     49.9           24                NaN                  1.0               NaN
+   2015          1227        1202     0.9796              0.458   65971       225049     51.1           24                NaN                  NaN               1.0
+   2016          1228        1205     0.9813              0.461   66051       222631     49.0           23                NaN                  NaN               NaN
+   2017          1231        1205     0.9789              0.452   66047       230990     49.2           25                NaN                  1.0               NaN
+   2018          1225        1040     0.8490              0.297   56494       200515     44.9          163                1.0                  1.0              20.0
+   2019          1231         984     0.7994              0.309   54545       195414     44.6          187               12.0                  NaN              48.0
+   2020          1057         872     0.8250              0.300   49933       173672     38.4          157                2.0                  NaN              26.0
+   2021          1081        1066     0.9861              0.260   57855       209677     45.0           15                NaN                  NaN               NaN
+   2022          1231        1217     0.9886              0.259   66846       237096     51.5           14                NaN                  NaN               NaN
+   2023          1176        1153     0.9804              0.263   63628       226882     47.8           20                3.0                  NaN               NaN
