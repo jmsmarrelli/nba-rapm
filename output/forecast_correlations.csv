@@ -1,5 +1,5 @@
-model,r
-"RAPM, 3-season window",0.7025
-"RAPM, one season only",0.6628
-Box-score estimate,0.6582
-Team's own net rating last year,0.5532
+model,r,mae,rmse,bias,team_seasons
+"RAPM, 3-season window",0.5566,4.7989,5.8917,3.9162,210.0
+"RAPM, one season only",0.5766,3.4048,4.4013,1.6695,210.0
+Box-score estimate,0.4749,4.5471,5.7671,3.8732,210.0
+Team's own net rating last year,0.5753,3.4438,4.4804,0.0001,210.0

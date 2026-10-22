@@ -71,7 +71,7 @@ def fig_cv(cv: pd.DataFrame, best: float) -> None:
     ax.set_title("The penalty is chosen, not assumed", loc="left")
     S.caption(fig, "Five-fold cross-validation with folds split by game, weighted by "
                    "possessions. The left end of this curve is adjusted plus-minus with no "
-                   "regularization at all; it is the worst model on the chart.")
+                   "regularisation at all; it is the worst model on the chart.")
     fig.tight_layout()
     fig.savefig(FIG / "01_ridge_cv.png")
     plt.close(fig)
@@ -92,9 +92,9 @@ def fig_shrinkage(apm: pd.DataFrame, rapm: pd.DataFrame, poss: pd.Series) -> Non
             label="Ridge penalty (RAPM)")
     ax.legend(loc="upper left", fontsize=8.6)
     S.strip(ax)
-    ax.set_xlabel("Rating, points per 100 possessions")
+    ax.set_xlabel("Rating, points per 100 marked sequences")
     ax.set_ylabel("Players")
-    ax.set_title("What regularization removes", loc="left")
+    ax.set_title("What regularisation removes", loc="left")
 
     ax = axes[1]
     ax.scatter(m["poss"], m["rapm_apm"], s=8, c=S.NEUTRAL, lw=0, alpha=0.6, zorder=2)
@@ -103,13 +103,13 @@ def fig_shrinkage(apm: pd.DataFrame, rapm: pd.DataFrame, poss: pd.Series) -> Non
     ax.set_xscale("log")
     ax.set_ylim(-45, 45)
     S.strip(ax)
-    ax.set_xlabel("Possessions on the floor")
-    ax.set_ylabel("Rating, points per 100")
+    ax.set_xlabel("Marked sequences on the floor")
+    ax.set_ylabel("Rating, points per 100 marked sequences")
     ax.set_title("Where it removes it", loc="left")
     ax.text(0.03, 0.05, "Grey: no penalty.   Blue: RAPM.", transform=ax.transAxes,
             fontsize=8.6, color=S.INK_2)
 
-    S.caption(fig, f"Players with 100+ possessions in the window. Unpenalized ratings run "
+    S.caption(fig, f"Players with 100+ possessions in the window. Unpenalised ratings run "
                    f"from {m['rapm_apm'].min():.0f} to {m['rapm_apm'].max():+.0f} points per "
                    f"100 and are worst exactly where the sample is thinnest. The penalty "
                    f"leaves the well-observed players almost untouched.")
@@ -137,9 +137,9 @@ def fig_leaderboard(tab: pd.DataFrame, window_label: str) -> None:
     ax.grid(axis="y", visible=False)
     S.strip(ax, keep=("bottom",))
     ax.tick_params(axis="y", labelsize=9)
-    ax.set_xlabel("Points per 100 possessions")
-    ax.set_title(f"RAPM, {window_label}", loc="left", pad=30)
-    ax.text(0.0, 1.028, "Orange: offense.   Blue: defense.   Number: the two added together.",
+    ax.set_xlabel("Points per 100 marked sequences")
+    ax.set_title(f"Sequence-proxy adjusted ratings, {window_label}", loc="left", pad=30)
+    ax.text(0.0, 1.028, "Orange: offence.   Blue: defence.   Number: the two added together.",
             transform=ax.transAxes, fontsize=9, color=S.INK_2)
     S.caption(fig, f"Players with {MIN_POSS_PLAYER:,}+ possessions across the window. Ratings "
                    "are relative to a replacement-free league average, so they sum to roughly "
@@ -185,12 +185,12 @@ def main() -> None:
     fig_shrinkage(apm, ratings[["player_id", "rapm"]], poss)
     fig_leaderboard(qualified, label)
 
-    print(f"\nhome court, estimated inside the model: {coef[-1]:+.2f} points per 100")
+    print(f"\nhome court, estimated inside the model: {coef[-1]:+.2f} points per 100 marked sequences")
     print(f"\n--- top 15 by RAPM, {label} ---")
     print(qualified.nlargest(15, "rapm")[
         ["player", "team", "poss", "o_rapm", "d_rapm", "rapm"]].to_string(
         index=False, float_format=lambda v: f"{v:.2f}"))
-    print(f"\n--- top 8 defense ---")
+    print(f"\n--- top 8 defence ---")
     print(qualified.nlargest(8, "d_rapm")[
         ["player", "team", "poss", "o_rapm", "d_rapm"]].to_string(
         index=False, float_format=lambda v: f"{v:.2f}"))
@@ -199,10 +199,10 @@ def main() -> None:
     thin = thin[thin["poss"].between(100, 400)]
     print(f"\nunregularised ratings for players with 100-400 possessions: "
           f"SD {thin['rapm'].std():.1f}, range {thin['rapm'].min():.0f} to "
-          f"{thin['rapm'].max():+.0f} points per 100")
+          f"{thin['rapm'].max():+.0f} points per 100 marked sequences")
     reg = ratings.merge(poss.rename("p2"), left_on="player_id", right_index=True)
     reg = reg[reg["p2"].between(100, 400)]
-    print(f"the same players after regularization:                      "
+    print(f"the same players after regularisation:                      "
           f"SD {reg['rapm'].std():.1f}, range {reg['rapm'].min():.1f} to "
           f"{reg['rapm'].max():+.1f}")
     print(f"\ntotal {time.time() - t0:.0f}s")

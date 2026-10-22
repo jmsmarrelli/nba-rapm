@@ -1,14 +1,14 @@
 stat,per_100_coef,per_sd
-Points,1.9965,6.2827
-Field goals made,-2.1636,-2.4699
-Shot attempts,-0.9323,-2.0941
-Free throw attempts,-1.0761,-1.2391
-Assists,0.5907,0.7814
-Turnovers,-1.2104,-0.6079
-Threes made,-0.7145,-0.511
-Steals,1.7533,0.4973
-Defensive rebounds,0.2571,0.335
-Offensive rebounds,0.2146,0.1901
-Blocks,0.4177,0.1817
-Threes attempted,0.0108,0.0198
-Fouls,-0.0188,-0.0136
+Points,0.9491,5.814
+Field goals made,-0.9886,-2.195
+Shot attempts,-0.4649,-2.0349
+Free throw attempts,-0.4951,-1.1168
+Assists,0.3073,0.7944
+Turnovers,-0.6378,-0.6239
+Steals,0.8917,0.4957
+Threes made,-0.3258,-0.4564
+Defensive rebounds,0.1368,0.3478
+Blocks,0.2192,0.1845
+Offensive rebounds,0.1032,0.179
+Threes attempted,0.0145,0.0518
+Fouls,-0.0051,-0.0072

@@ -1,21 +1,8 @@
-"""Counting possessions from the log rather than estimating them.
+"""Event-marked offensive sequences: an approximation, not certified possessions.
 
-The usual shortcut is FGA + 0.44*FTA - OREB + TOV. It is a decent season-level
-approximation and a poor stint-level one, because the 0.44 is a league-average
-guess about which free throws end a trip and stints are short enough for that
-guess to matter.
-
-Since the log is right there, possessions are counted directly. Every event that
-unambiguously identifies which team has the ball is marked with that team; the
-sequence of marks is then compressed into runs, and each run is one possession.
-Ambiguous events - fouls, timeouts, jump balls, substitutions - are skipped
-rather than guessed at, which is safe: dropping a marker can only merge two
-possessions that were already adjacent and identical, and adjacent identical
-marks collapse anyway.
-
-This handles the case that trips up the formula, an and-one: made field goal and
-free throw are both marked to the same team, they are adjacent, and they
-collapse into the single possession they actually were.
+Periods reset the sequence. Special retained-ball free throws do not identify
+control and their points are excluded from the modeled scoring outcome. Ambiguous
+jump balls and missing events can still merge sequences; results use proxy units.
 """
 
 from __future__ import annotations
@@ -25,6 +12,14 @@ import pandas as pd
 
 TURNOVER_PAT = (r"Turnover|Traveling|Double Dribble|Palming|Discontinue Dribble|"
                 r"Second Violation|Step Out of Bounds|Offensive Foul")
+
+
+def special_free_throw(pbp: pd.DataFrame) -> pd.Series:
+    text = pbp["type_text"].fillna("")
+    if "text" in pbp:
+        text = text + " " + pbp["text"].fillna("")
+    return text.str.contains(r"free throw", case=False) & text.str.contains(
+        r"technical|flagrant|clear[ -]?path|away[ -]?from[ -]?play|take foul", case=False)
 
 
 def offensive_team(pbp: pd.DataFrame) -> pd.Series:
@@ -42,16 +37,21 @@ def offensive_team(pbp: pd.DataFrame) -> pd.Series:
     off = off.mask(tt.eq("Defensive Rebound"), pd.Series(other, index=pbp.index))
     # The offence turns it over.
     off = off.mask(tt.str.contains(TURNOVER_PAT, regex=True, na=False), team)
-    return off
+    return off.mask(special_free_throw(pbp))
 
 
-def possession_runs(off: pd.Series) -> pd.Series:
-    """Label each marked event with a possession number.
-
-    Unmarked events inherit the possession they sit inside, so a foul in the
-    middle of a trip lands in the right stint bucket.
-    """
+def possession_runs(off: pd.Series, period: pd.Series) -> pd.Series:
+    """Number marked runs, resetting at period boundaries without cross-period fill."""
     marked = off.dropna()
-    change = marked.ne(marked.shift())
-    poss_id = change.cumsum()
-    return poss_id.reindex(off.index).ffill()
+    p = period.reindex(marked.index)
+    change = marked.ne(marked.shift()) | p.ne(p.shift())
+    ids = change.cumsum().reindex(off.index)
+    return ids.groupby(period).ffill()
+
+
+def scoring_points(pbp: pd.DataFrame) -> pd.Series:
+    """Made free throws are one point even when the mirror's score_value is zero."""
+    made = pbp["scoring_play"].fillna(False).astype(bool)
+    ft = pbp["type_text"].fillna("").str.contains("free throw", case=False)
+    points = pd.to_numeric(pbp["score_value"], errors="coerce").fillna(0).where(made, 0)
+    return points.mask(made & ft, 1)
