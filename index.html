@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RAPM, built from the log up</title>
-<meta name="description" content="Regularized adjusted plus-minus for the NBA, starting from raw play-by-play rather than a lineup feed — which means the hard part is not the regression. It is knowing who was on th">
+<title>Regularized adjusted scoring: a public-data methods study</title>
+<meta name="description" content="This project rebuilds lineups from public play-by-play and fits regularized offensive and defensive player effects. It is a methods demonstration using marked offensive sequences, ">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
 :root{
@@ -99,262 +99,249 @@ figure img{display:block;width:100%;height:auto;border:1px solid var(--rule);bor
 </style>
 </head>
 <body>
-<header class="bar"><div class="wrap"><span class="slug">nba-rapm</span><nav><a href="docs/method.html">method</a><a href="https://github.com/jmsmarrelli/nba-rapm">repository</a><a href="https://jmsmarrelli.github.io/basketball-analytics/">all projects</a></nav></div></header>
+<header class="bar"><div class="wrap"><span class="slug">nba-rapm</span><nav><a href="docs/method.html">method</a></nav></div></header>
 <main><div class="wrap">
-<h1>RAPM, built from the log up</h1>
-<p>Regularized adjusted plus-minus for the NBA, starting from raw play-by-play
-rather than a lineup feed — which means the hard part is not the regression. It
-is knowing who was on the floor.</p>
-<p>Ten seasons, 2013-14 through 2022-23. <strong>11,145 games rebuilt out of 11,913
-(93.6%), 611,058 stints, 2.15 million possessions.</strong></p>
-<hr>
-<h2>The part that is actually hard</h2>
-<p>Play-by-play records substitutions. It never records a lineup. To get one you
-replay the game — start each period with the right five and apply every
-substitution in order — and the trouble is that periods two, three and four have
-no equivalent of a box score's starters column.</p>
-<p>The inference is exact whenever the log is complete: a player was on the floor at
-the start of a period if, during that period, he did <em>anything</em> — took a shot,
-grabbed a rebound, committed a foul, got subbed out — before he ever entered the
-game. Comparing each player's first substitution <em>in</em> against his first
-appearance in any other event resolves the starting five for a period without
-guessing.</p>
-<p>Then it gets checked. Every player's reconstructed floor time, against his box
-score minutes, for the whole 2022-23 season:</p>
-<figure><img loading="lazy" alt="Reconstruction check" src="figures/04_reconstruction.png"></figure>
-<p><strong>Median absolute error 0.25 minutes. 99.5% of player-games within one minute.
-Correlation 0.99919</strong> across 24,282 player-games. Most of the residual
-disagreement looks like the play-by-play clock, which stamps events when the
-scorer entered them rather than the second they happened.</p>
-<p>Games that fail — a period that will not resolve to five a side, or floor time
-that disagrees with the box score by more than the thresholds in <code>config.py</code> —
-are dropped and counted, not repaired. <code>output/reconstruction_audit.csv</code> has the
-per-season figures. The keep rate is above 97% in seven of ten seasons and falls
-to 80-85% in 2017-18 through 2019-20, where the source feed has thinner
-substitution logging. A lineup that is silently wrong is far worse than one that
-is missing.</p>
-<hr>
-<h2>Why the penalty is not optional</h2>
-<p>Adjusted plus-minus is a regression of what happened on who was out there. It is
-the right idea and, run as plain least squares, it does not work at all.</p>
-<p>Teammates share almost all of their minutes, so the design matrix is close to
-singular and least squares answers with enormous, unstable numbers. Among players
-with 100 to 400 possessions in the window, unregularized ratings have a standard
-deviation of <strong>18.7 points per 100</strong> and run from −46 to +45. Those are not
-findings; they are the model reporting that it cannot tell two players apart, in
-the loudest possible way.</p>
-<figure><img loading="lazy" alt="Shrinkage" src="figures/02_shrinkage.png"></figure>
-<p>Ridge fixes it by refusing to make a large claim on thin evidence. The same
-players come out with a standard deviation of <strong>0.4</strong>. Players the data can
-actually see are barely touched.</p>
-<p>The penalty is chosen, not assumed — five-fold cross-validation with folds split
-by game, weighted by possessions:</p>
-<figure><img loading="lazy" alt="Ridge tuning" src="figures/01_ridge_cv.png"></figure>
-<p>And the left end of that curve is worth saying out loud. On held-out games:</p>
+<h1>Regularized adjusted scoring: a public-data methods study</h1>
+<p>This project rebuilds lineups from public play-by-play and fits regularized offensive and defensive player effects. It is a methods demonstration using <strong>marked offensive sequences</strong>, an approximation to possessions. Its ratings should not be presented as certified NBA RAPM or a definitive player ranking.</p>
+<h2>Reconstruction and scoring checks</h2>
+<div class="tw"><table>
+<thead>
+<tr>
+<th>Season</th>
+<th>Games in source</th>
+<th>Games kept</th>
+<th>Retained share</th>
+<th>Mean minute error (minutes)</th>
+<th>Recorded points</th>
+<th>Special FT points excluded</th>
+<th>Modeled points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2013–14</td>
+<td class="num">1,225</td>
+<td class="num">1,178</td>
+<td class="num">0.962</td>
+<td class="num">0.461</td>
+<td class="num">237,470</td>
+<td class="num">1,388</td>
+<td class="num">236,082</td>
+</tr>
+<tr>
+<td>2014–15</td>
+<td class="num">1,226</td>
+<td class="num">1,157</td>
+<td class="num">0.944</td>
+<td class="num">0.459</td>
+<td class="num">231,040</td>
+<td class="num">1,139</td>
+<td class="num">229,901</td>
+</tr>
+<tr>
+<td>2015–16</td>
+<td class="num">1,227</td>
+<td class="num">559</td>
+<td class="num">0.456</td>
+<td class="num">0.458</td>
+<td class="num">115,635</td>
+<td class="num">638</td>
+<td class="num">114,997</td>
+</tr>
+<tr>
+<td>2016–17</td>
+<td class="num">1,230</td>
+<td class="num">1,176</td>
+<td class="num">0.956</td>
+<td class="num">0.452</td>
+<td class="num">247,958</td>
+<td class="num">1,323</td>
+<td class="num">246,635</td>
+</tr>
+<tr>
+<td>2017–18</td>
+<td class="num">1,223</td>
+<td class="num">1,026</td>
+<td class="num">0.839</td>
+<td class="num">0.297</td>
+<td class="num">217,356</td>
+<td class="num">1,012</td>
+<td class="num">216,344</td>
+</tr>
+<tr>
+<td>2018–19</td>
+<td class="num">1,229</td>
+<td class="num">981</td>
+<td class="num">0.798</td>
+<td class="num">0.308</td>
+<td class="num">217,827</td>
+<td class="num">1,106</td>
+<td class="num">216,721</td>
+</tr>
+<tr>
+<td>2019–20</td>
+<td class="num">1,055</td>
+<td class="num">871</td>
+<td class="num">0.826</td>
+<td class="num">0.300</td>
+<td class="num">194,330</td>
+<td class="num">1,026</td>
+<td class="num">193,304</td>
+</tr>
+<tr>
+<td>2020–21</td>
+<td class="num">1,080</td>
+<td class="num">1,065</td>
+<td class="num">0.986</td>
+<td class="num">0.260</td>
+<td class="num">238,589</td>
+<td class="num">1,154</td>
+<td class="num">237,435</td>
+</tr>
+<tr>
+<td>2021–22</td>
+<td class="num">1,230</td>
+<td class="num">1,213</td>
+<td class="num">0.986</td>
+<td class="num">0.259</td>
+<td class="num">268,230</td>
+<td class="num">1,541</td>
+<td class="num">266,689</td>
+</tr>
+<tr>
+<td>2022–23</td>
+<td class="num">1,175</td>
+<td class="num">1,149</td>
+<td class="num">0.978</td>
+<td class="num">0.263</td>
+<td class="num">263,125</td>
+<td class="num">1,433</td>
+<td class="num">261,692</td>
+</tr>
+</tbody>
+</table></div>
+<p>Source: <a href="output/reconstruction_audit.csv">reconstruction_audit.csv</a>.</p>
+<p>The source feed assigns zero <code>score_value</code> to many made free throws in older seasons. The corrected pipeline assigns one point to a marked made free throw and requires team totals to match the box score. The parser resets sequence IDs at period boundaries. Technical and other identified retained-ball free throws do not switch possession markers; their points are excluded from the modeled ordinary-scoring outcome and counted separately. Kept games reconcile recorded points to box scores and modeled points to the retained scoring events. Exhibition games are excluded.</p>
+<p>Lineups must meet the published average and worst-player minute-error thresholds. Agreement in total minutes does not prove the lineup at every event is correct. Ambiguous jump balls and incomplete logs can still merge sequences. Credit goes to the lineup at the start of the marked sequence, which is a modeling convention when substitutions occur during a trip.</p>
+<h2>A separate held-out test</h2>
 <div class="tw"><table>
 <thead>
 <tr>
 <th>Model</th>
-<th>Weighted MSE</th>
+<th>MSE</th>
+<th>R² vs league mean</th>
+<th>MSE improvement vs team baseline</th>
+<th>Test games</th>
+<th>Training-selected penalty</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>League average</td>
-<td class="num">4,012.8</td>
+<td class="num">3941.017</td>
+<td class="num">0.0000</td>
+<td class="num">-7.087</td>
+<td class="num">685</td>
+<td class="num">4000.000</td>
 </tr>
 <tr>
-<td>Team offense and defense only</td>
-<td class="num">4,004.5</td>
+<td>Team offence and defence</td>
+<td class="num">3933.931</td>
+<td class="num">0.0018</td>
+<td class="num">0.000</td>
+<td class="num">685</td>
+<td class="num">4000.000</td>
 </tr>
 <tr>
-<td><strong>Adjusted plus-minus, no penalty</strong></td>
-<td class="num"><strong>4,016.7</strong></td>
+<td>Adjusted plus-minus (no penalty)</td>
+<td class="num">3948.006</td>
+<td class="num">-0.0018</td>
+<td class="num">-14.075</td>
+<td class="num">685</td>
+<td class="num">4000.000</td>
 </tr>
 <tr>
 <td>RAPM</td>
-<td class="num"><strong>3,984.3</strong></td>
+<td class="num">3915.011</td>
+<td class="num">0.0066</td>
+<td class="num">18.920</td>
+<td class="num">685</td>
+<td class="num">4000.000</td>
 </tr>
 </tbody>
 </table></div>
-<figure><img loading="lazy" alt="Out of sample" src="figures/05_out_of_sample.png"></figure>
-<p>Unregularized adjusted plus-minus is worse than a model that knows nothing about
-the ten players on the floor beyond which two teams they play for. RAPM is the
-only specification here that beats knowing the team name.</p>
-<p>(The R² values behind those numbers are tiny — 0.007 for RAPM — and that is
-correct. One stint is three or four possessions. Almost all of its scoring is
-noise. The comparison between models is the whole content; the absolute fit is
-not supposed to be impressive and any plus-minus model that fits a single stint
-well is fitting something it should not be.)</p>
-<hr>
-<h2>The ratings</h2>
-<p>Three seasons pooled, 2020-21 through 2022-23: 188,329 stint-sides, 3,436 games,
-673,655 possessions, 781 players, penalty 4,000.</p>
-<figure><img loading="lazy" alt="Leaderboard" src="figures/03_leaderboard.png"></figure>
-<p>Two sanity checks a reader can make without trusting any of the above. The model
-is given no information about home court beyond an indicator column, and it
-estimates it at <strong>+1.72 points per 100</strong>, which is where independent estimates
-for those seasons land. And the top of the defensive list is Rudy Gobert (+4.58),
-Alex Caruso (+4.36), Paul George (+3.47), Jusuf Nurkić, Derrick White, Matisse
-Thybulle, Anthony Davis. Nothing in the pipeline knows what a block is.</p>
-<p>Ratings are relative to league average, not to a replacement player, so they sum
-to roughly zero across the league. A +5 is a player who makes his team five
-points per 100 better than an average one, which is not the same as five points
-better than the guy who would take his minutes.</p>
-<hr>
-<h2>What the box score can and cannot see</h2>
-<p>Regressing RAPM on per-100 box rates:</p>
-<p><strong>R² = 0.338</strong> across 627 players with 500+ possessions in the window. Two
-thirds of the variance in a player's plus-minus impact is not in his counting
-stats.</p>
-<p>The coefficients are worth reading, in units of a one standard deviation change:</p>
+<p>Source: <a href="output/out_of_sample.csv">out_of_sample.csv</a>.</p>
+<p>The outer test games are chosen first. Ridge tuning uses only the remaining training games; the split and training cross-validation scores are saved. A random held-out game from the same period measures a different task from forecasting a future season.</p>
+<figure><img loading="lazy" src="figures/05_out_of_sample.png" alt="Held-out evaluation" /></figure>
+<p>MSE is measured in squared points per 100 marked sequences. These units use the sequence approximation described above.</p>
+<h2>Prior-season carry-over baseline</h2>
 <div class="tw"><table>
 <thead>
 <tr>
-<th></th>
-<th>Effect on RAPM</th>
+<th>Model</th>
+<th>Correlation</th>
+<th>MAE</th>
+<th>RMSE</th>
+<th>Bias</th>
+<th>Team-seasons</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Points</td>
-<td class="num"><strong>+6.28</strong></td>
-</tr>
-<tr>
-<td>Field goals made</td>
-<td class="num"><strong>−2.47</strong></td>
-</tr>
-<tr>
-<td>Shot attempts</td>
-<td class="num"><strong>−2.09</strong></td>
-</tr>
-<tr>
-<td>Free throw attempts</td>
-<td class="num">−1.24</td>
-</tr>
-<tr>
-<td>Assists</td>
-<td class="num">+0.78</td>
-</tr>
-<tr>
-<td>Turnovers</td>
-<td class="num">−0.61</td>
-</tr>
-<tr>
-<td>Steals</td>
-<td class="num">+0.50</td>
-</tr>
-<tr>
-<td>Defensive rebounds</td>
-<td class="num">+0.34</td>
-</tr>
-<tr>
-<td>Blocks</td>
-<td class="num">+0.18</td>
-</tr>
-</tbody>
-</table></div>
-<p>Points enter strongly positive while makes and attempts enter negative, which is
-the same statement made twice: what the model rewards is points <em>net of the
-possessions used to get them</em>. Scoring efficiently helps. Scoring a lot does not,
-on its own. And the two stats that get quoted as defensive evidence — steals and
-blocks — carry almost none of the defensive signal, which is exactly why the
-defensive leaderboard above looks nothing like a blocks leaderboard.</p>
-<figure><img loading="lazy" alt="Box score gap" src="figures/06_boxscore_gap.png"></figure>
-<p>The players furthest above the line are the ones every front office already
-argues about: Derrick White, Paul George, Alex Caruso, Jrue Holiday, Aaron
-Gordon, Dillon Brooks. Point-of-attack defenders and connective players, whose
-contribution is a shot the other team did not get.</p>
-<hr>
-<h2>Does any of it predict anything</h2>
-<p>The test that matters. For each anchor season, ratings are built from a
-three-season window and used to forecast the <em>following</em> season's team net
-rating, weighting each player by the possessions he actually went on to play.
-Nothing in the forecast uses data from the season being forecast except which
-players ended up on which roster.</p>
-<div class="tw"><table>
-<thead>
-<tr>
-<th>Forecast built from</th>
-<th>Correlation with next season's net rating</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>RAPM, three-season window</strong></td>
-<td class="num"><strong>0.70</strong></td>
+<td>RAPM, 3-season window</td>
+<td class="num">0.557</td>
+<td class="num">4.799</td>
+<td class="num">5.892</td>
+<td class="num">3.916</td>
+<td class="num">210</td>
 </tr>
 <tr>
 <td>RAPM, one season only</td>
-<td class="num">0.66</td>
+<td class="num">0.577</td>
+<td class="num">3.405</td>
+<td class="num">4.401</td>
+<td class="num">1.669</td>
+<td class="num">210</td>
 </tr>
 <tr>
-<td>Box-score estimate, same window</td>
-<td class="num">0.66</td>
+<td>Box-score estimate</td>
+<td class="num">0.475</td>
+<td class="num">4.547</td>
+<td class="num">5.767</td>
+<td class="num">3.873</td>
+<td class="num">210</td>
 </tr>
 <tr>
-<td>The team's own net rating last year</td>
-<td class="num">0.55</td>
+<td>Team's own net rating last year</td>
+<td class="num">0.575</td>
+<td class="num">3.444</td>
+<td class="num">4.480</td>
+<td class="num">0.000</td>
+<td class="num">210</td>
 </tr>
 </tbody>
 </table></div>
-<p>215 team-seasons.</p>
-<figure><img loading="lazy" alt="Forecast" src="figures/07_forecast.png"></figure>
-<p>Three things fall out of that table. Player ratings beat team results, which is
-the case for doing any of this. The three-season window beats one season, which
-is why the headline model pools three and why a single season of RAPM should be
-read with a wide error bar. And the box-score estimate is close behind — a public
-model built only from counting stats gets most of the way there, so the honest
-claim for RAPM is a real but modest edge, not a different category of knowledge.</p>
-<hr>
-<h2>What this does not do</h2>
-<ul>
-<li><strong>No prior, no aging curve, no multi-year weighting.</strong> This is plain ridge on a
-  stint matrix. Production systems (RPM, EPM, LEBRON) add a box-score prior, age
-  adjustment and decayed weighting by recency, all of which help. Leaving them out
-  keeps the estimator legible and the comparison against the box score honest.</li>
-<li><strong>No error bars on individual ratings.</strong> Ridge coefficients have a sampling
-  distribution and I have not bootstrapped it. Read the gap between two adjacent
-  players as noise unless it is large.</li>
-<li><strong>Possessions are counted, not estimated</strong>, from the log — but the count depends
-  on the log being complete, and the three seasons with weaker substitution
-  logging are also the ones where possession counts will be least reliable.</li>
-<li><strong>A possession is credited to the stint it began in.</strong> A trip that spans a
-  substitution is attributed entirely to the five who started it.</li>
-<li><strong>Regular season only</strong>, and <strong>2022-23 is the last season</strong>, which is where the
-  public play-by-play mirror this reads currently ends.</li>
-<li><strong>Garbage time is included.</strong> Filtering it is defensible and I did not do it,
-  partly because every threshold is arbitrary and partly because the possession
-  weighting already makes blowout minutes cheap.</li>
-</ul>
-<hr>
-<h2>Running it</h2>
-<pre><code class="language-bash">pip install -r requirements.txt
-python src/run_01_stints.py      # play-by-play -&gt; stints with lineups  (~8 min)
-python src/run_02_rapm.py        # cross-validated ridge, figures 01-03
-python src/run_03_validate.py    # reconstruction check + held-out test, figures 04-05
-python src/run_04_boxscore.py    # box-score model and forecast, figures 06-07
+<p>Source: <a href="output/forecast_correlations.csv">forecast_correlations.csv</a>.</p>
+<p>MAE, RMSE and bias are points per 100 marked sequences. Correlation is unitless.</p>
+<p>For each forecast year, player ratings, tuning, team assignments and usage weights come from earlier seasons. The target season is used only for evaluation outcomes. This carry-over baseline deliberately cannot anticipate trades, injuries or new rotations. It is not a roster-aware preseason projection.</p>
+<p>Box-score numerators are restricted to the same reconstructed games as their denominators. The published rates account for exposure being counted on both offense and defense.</p>
+<h2>What the model supports</h2>
+<p>The useful contribution is the reconstruction audit, regularization comparison and separation of training from evaluation. Player coefficients remain conditional associations affected by teammates, omitted context, missing games and the sequence approximation. Before using the rankings for basketball decisions, replace the proxy with a possession parser validated against independent event annotations and evaluate sensitivity to game exclusions.</p>
+<p>This study ends in 2022–23. It contains no current player projection.</p>
+<h2>Reproduce</h2>
+<p>The historical analysis used Python 3.12 with the pinned dependencies below. From this repository:</p>
+<pre><code class="language-bash">python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+make fetch-data PY=python
+make all PY=python
+make report site PY=python
 </code></pre>
-<p>Or <code>make all</code>. Stage 1 is the slow one; everything after it reads cached stints.</p>
-<pre><code>src/
-  config.py           paths, seasons, the reconstruction thresholds
-  lineups.py          replaying a game to recover who was on the floor
-  possessions.py      counting possessions from the log, not estimating them
-  rapm.py             the sparse design matrix and the ridge fit
-  labels.py           collision-resolving point labels for the scatterplots
-  style.py            one place that decides what every figure looks like
-  run_0*.py           the pipeline, in order
-output/               every number quoted above, as CSV
-figures/              seven figures, regenerated from scratch by the pipeline
-docs/method.md        longer notes, including the reconstruction rules in full
-</code></pre>
-<h2>Data</h2>
-<p>Play-by-play and box scores from
-<a href="https://github.com/sportsdataverse/hoopR-data">sportsdataverse/hoopR-data</a>,
-a mirror of ESPN's public feeds. <code>data/README.md</code> has the fetch step.</p>
-<h2>License</h2>
-<p>MIT. See <code>LICENSE</code>.</p>
+<p><code>make all</code> verifies source hashes before running the analyses in order. A missing or changed input stops the build. Data downloads need network access; article rendering uses the included result tables. See <a href="data/source_manifest.json">the source manifest</a>, <a href="docs/method.md">method notes</a> and <a href="VALIDATION_CURRENT.md">current validation record</a> for the distinction between a source rebuild and checks of delivered outputs.</p>
+<p>Season keys in CSV files use the <strong>ending year</strong>: <code>2025</code> means 2024–25. Display tables use full season labels. The MIT license covers code; third-party data retain their providers' rights and terms.</p>
+<p><a href="https://github.com/jmsmarrelli/basketball-analytics">Portfolio</a> · <a href="PROVENANCE.md">AI assistance and provenance</a></p>
+
 </div></main>
-<footer class="foot"><div class="wrap"><span>nba-rapm</span><span>figures and tables regenerated by the pipeline in this repository</span></div></footer>
+<footer class="foot"><div class="wrap"><span>nba-rapm</span><span>source, results and validation notes in the repository</span></div></footer>
 </body>
 </html>

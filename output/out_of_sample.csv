@@ -1,5 +1,5 @@
-model,mse,r2_vs_average,gain_over_team,test_games,test_possessions
-League average,4012.7869,0.0,-8.2489,687,134455
-Team offense and defense,4004.538,0.0021,0.0,687,134455
-Adjusted plus-minus (no penalty),4016.7009,-0.001,-12.1628,687,134455
-RAPM,3984.3006,0.0071,20.2374,687,134455
+model,mse,r2_vs_average,gain_over_team,training_selected_alpha,test_games,test_possessions
+League average,3941.0175,0.0,-7.0865,4000.0,685,135348
+Team offence and defence,3933.931,0.0018,0.0,4000.0,685,135348
+Adjusted plus-minus (no penalty),3948.0065,-0.0018,-14.0755,4000.0,685,135348
+RAPM,3915.0113,0.0066,18.9197,4000.0,685,135348

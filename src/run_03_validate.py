@@ -10,7 +10,7 @@ from substitutions, against the minutes in the box score. If those disagree, the
 lineups are wrong and nothing downstream is worth reading.
 
 **Do the ratings beat the obvious alternatives out of sample?** Held-out games,
-scored four ways: a league average, team-level offense and defense effects, plain
+scored four ways: a league average, team-level offence and defence effects, plain
 adjusted plus-minus, and RAPM. Improvement over the team-level model is the only
 one that means anything - it is the difference between knowing which team was on
 the floor and knowing which five players were.
@@ -85,13 +85,19 @@ def team_baseline_design(stints: pd.DataFrame):
     return sparse.hstack([body, home], format="csr")
 
 
-def out_of_sample(stints: pd.DataFrame, alpha: float, seed: int = SEED) -> pd.DataFrame:
+def out_of_sample(stints: pd.DataFrame, seed: int = SEED) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     games = np.unique(stints["game_id"].to_numpy())
     test_games = set(rng.choice(games, size=len(games) // 5, replace=False).tolist())
     is_test = stints["game_id"].isin(test_games).to_numpy()
     tr, te = np.flatnonzero(~is_test), np.flatnonzero(is_test)
 
+    # Tune only on training games; outer test outcomes never choose alpha.
+    cv = R.cross_validate(R.Design(stints.iloc[tr]), ALPHAS, seed=seed)
+    alpha = float(cv.loc[cv["cv_mse"].idxmin(), "alpha"])
+    cv.to_csv(OUT / "holdout_training_cv.csv", index=False)
+    split = stints[["game_id"]].assign(is_test=is_test).drop_duplicates()
+    split.to_csv(OUT / "holdout_split.csv", index=False)
     design = R.Design(stints)
     y, w = design.y, design.poss
     Xt = team_baseline_design(stints)
@@ -103,7 +109,7 @@ def out_of_sample(stints: pd.DataFrame, alpha: float, seed: int = SEED) -> pd.Da
     base = np.average(y[tr], weights=w[tr])
     results = [{"model": "League average", "mse": score(np.full(len(te), base))}]
 
-    for name, X, a in [("Team offense and defense", Xt, 1.0),
+    for name, X, a in [("Team offence and defence", Xt, 1.0),
                        ("Adjusted plus-minus (no penalty)", design.X, NEAR_ZERO),
                        ("RAPM", design.X, alpha)]:
         est = Ridge(alpha=a, fit_intercept=True, solver="sparse_cg", tol=1e-6, max_iter=3000)
@@ -113,6 +119,7 @@ def out_of_sample(stints: pd.DataFrame, alpha: float, seed: int = SEED) -> pd.Da
     out = pd.DataFrame(results)
     out["r2_vs_average"] = 1 - out["mse"] / out.loc[0, "mse"]
     out["gain_over_team"] = out.loc[1, "mse"] - out["mse"]
+    out["training_selected_alpha"] = alpha
     out["test_games"] = len(test_games)
     out["test_possessions"] = int(w[te].sum())
     return out
@@ -143,10 +150,7 @@ def fig_reconstruction(err: pd.DataFrame, season: int) -> None:
                         f"{100 * within:.1f}% within one minute",
             transform=ax.transAxes, va="top", fontsize=9, color=S.INK_2, linespacing=1.6)
 
-    S.caption(fig, f"{season - 1}-{str(season)[2:]} regular season, "
-                   f"{len(err):,} player-games. The residual disagreement is the "
-                   "play-by-play clock, which stamps events to the second the scorer entered "
-                   "them, not the second they happened.")
+    S.caption(fig, 'Reconstructed and box-score minutes for games with recoverable lineups. Differences may reflect timestamp, substitution, starter and feed errors. Agreement in minutes is necessary but does not prove every event lineup is correct.')
     fig.tight_layout()
     fig.savefig(FIG / "04_reconstruction.png")
     plt.close(fig)
@@ -166,11 +170,8 @@ def fig_out_of_sample(res: pd.DataFrame) -> None:
     S.strip(ax, keep=("bottom",))
     ax.tick_params(axis="y", labelsize=9.2)
     ax.set_xlabel("Held-out weighted mean squared error (lower is better)")
-    ax.set_title("Only one of these beats knowing the team name", loc="left")
-    S.caption(fig, f"A fifth of games held out ({int(res['test_games'].iloc[0]):,} games, "
-                   f"{int(res['test_possessions'].iloc[0]):,} possessions). Unregularised "
-                   "adjusted plus-minus is worse than a model that knows nothing about who is "
-                   "on the floor beyond the two team names.")
+    ax.set_title("Models evaluated on held-out games", loc="left")
+    S.caption(fig, 'An outer fifth of games is held out before alpha is tuned on training games. Weighted mean squared errors use the marked-sequence scoring outcome. This is a same-period held-out test, not a future-season forecast.')
     fig.tight_layout()
     fig.savefig(FIG / "05_out_of_sample.png")
     plt.close(fig)
@@ -190,9 +191,7 @@ def main() -> None:
     print(f"  correlation           {err['recon'].corr(err['minutes']):.5f}")
 
     stints = load_window(HEADLINE_END, WINDOW)
-    cv = pd.read_csv(OUT / "ridge_cv.csv")
-    alpha = float(cv.loc[cv["cv_mse"].idxmin(), "alpha"])
-    res = out_of_sample(stints, alpha)
+    res = out_of_sample(stints)
     res.round(4).to_csv(OUT / "out_of_sample.csv", index=False)
     fig_out_of_sample(res)
     print("\nheld-out prediction of stint scoring")

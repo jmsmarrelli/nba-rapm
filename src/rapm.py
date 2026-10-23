@@ -1,4 +1,4 @@
-"""Regularized adjusted plus-minus.
+"""Regularised adjusted plus-minus.
 
 The idea is old and simple. Every stint is an observation of ten players and a
 result. Regress the result on who was out there and the coefficients are each
@@ -7,7 +7,7 @@ player's effect, adjusted for everyone else on the floor.
 Done as plain least squares this is adjusted plus-minus, and it does not work.
 Teammates share almost all of their minutes, so the design matrix is close to
 singular and the fit answers with enormous, unstable, obviously wrong numbers -
-a backup center with 300 possessions ends up at plus forty per hundred because
+a backup centre with 300 possessions ends up at plus forty per hundred because
 he happened to share them with a good starting five. The problem is not the idea.
 It is that the data cannot separate players who are never apart, and least
 squares does not know that it is guessing.
@@ -18,8 +18,8 @@ exactly the players the data cannot pin down. The penalty strength is not a tast
 parameter - it is chosen by cross-validation on held-out games, and
 `run_02_rapm.py` shows the curve.
 
-Two columns per player: one for what happens when he is on offense, one for when
-he is on defense. Defensive coefficients are reported with the sign flipped so
+Two columns per player: one for what happens when he is on offence, one for when
+he is on defence. Defensive coefficients are reported with the sign flipped so
 that positive is good on both sides.
 """
 
